@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>ZÜMRA</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 html,body{
@@ -11,120 +10,97 @@ html,body{
   padding:0;
   width:100%;
   height:100%;
-  background:#000;
+  background:black;
   overflow:hidden;
-  font-family:Arial,sans-serif;
+  font-family:Segoe UI, sans-serif;
 }
 
-/* === YAĞMUR === */
+/* YAĞMUR */
 canvas{
   position:fixed;
   inset:0;
   z-index:1;
 }
 
-/* === ZÜMRA === */
+/* MERKEZ YAZI */
 #center{
-  position:fixed;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  position:absolute;
+  top:45%;
+  left:50%;
+  transform:translate(-50%,-50%);
   z-index:3;
-  pointer-events:none;
-}
-#title{
-  font-size:clamp(70px,14vw,170px);
-  letter-spacing:14px;
-  color:#000;
-  -webkit-text-stroke:1px #fff;
-}
-#title span{
-  color:#ff2a2a;
-  margin-left:20px;
-  text-shadow:0 0 15px rgba(255,40,40,.8);
 }
 
-/* === ISLAK DAMLA === */
-#wets{
-  position:fixed;
-  inset:0;
-  z-index:2;
-  pointer-events:none;
+#zumra{
+  font-size:88px;
+  letter-spacing:8px;
+  color:black;
+  -webkit-text-stroke:1.5px white;
+  text-shadow:0 0 12px rgba(255,255,255,.2);
 }
+
+#heart{
+  color:#b00000;
+  font-size:60px;
+  margin-left:12px;
+}
+
+/* ISLAKLIK */
+.wet{
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at top,
+    rgba(255,255,255,.18),
+    transparent 60%);
+  animation:wetFade 4s linear forwards;
+}
+
+@keyframes wetFade{
+  0%{opacity:0}
+  20%{opacity:.6}
+  100%{opacity:0}
+}
+
+/* DAMLA */
 .drop{
   position:absolute;
-  top:-50px;
-  width:18px;
-  height:18px;
-  border-radius:50%;
-  background:radial-gradient(circle at 30% 30%,
-    rgba(255,255,255,.9),
-    rgba(255,255,255,.2),
-    rgba(255,255,255,0));
-  animation:drip linear forwards;
-}
-@keyframes drip{
-  to{
-    transform:translateY(120vh) scale(1.4);
-    opacity:0;
-  }
+  width:2px;
+  height:60px;
+  background:linear-gradient(to bottom,
+    rgba(255,255,255,.6),
+    transparent);
+  animation:dropFall 3.5s linear forwards;
 }
 
-/* === ŞARKI SEÇ === */
-#pickWrap{
-  position:fixed;
-  bottom:40px;
-  width:100%;
-  text-align:center;
-  z-index:5;
+@keyframes dropFall{
+  to{transform:translateY(120px);opacity:0}
 }
-button{
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.3);
-  color:white;
-  padding:14px 22px;
-  border-radius:12px;
-  font-size:16px;
-}
-input[type=file]{display:none}
 
-/* === DİKEY PANEL === */
+/* ALT PANEL */
 #panel{
   position:fixed;
-  right:20px;
-  top:50%;
-  transform:translateY(-50%);
-  width:60px;
-  height:260px;
-  background:rgba(255,255,255,.06);
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  width:320px;
+  padding:14px;
+  background:rgba(0,0,0,.55);
   border:1px solid rgba(255,255,255,.25);
-  border-radius:16px;
-  display:none;
+  border-radius:12px;
+  z-index:5;
+  color:white;
+  display:flex;
   flex-direction:column;
-  align-items:center;
-  justify-content:space-evenly;
-  z-index:6;
+  gap:10px;
 }
-#panel label{
-  writing-mode:vertical-rl;
-  color:#aaa;
+
+.label{
   font-size:12px;
+  opacity:.8;
 }
+
 input[type=range]{
-  appearance:none;
-  width:160px;
-  height:4px;
-  transform:rotate(-90deg);
-  background:#666;
-  border-radius:5px;
-}
-input[type=range]::-webkit-slider-thumb{
-  appearance:none;
-  width:14px;
-  height:14px;
-  background:white;
-  border-radius:50%;
+  width:100%;
 }
 </style>
 </head>
@@ -132,130 +108,90 @@ input[type=range]::-webkit-slider-thumb{
 <body>
 
 <canvas id="rain"></canvas>
-<div id="wets"></div>
 
 <div id="center">
-  <div id="title">ZÜMRA <span>♥</span></div>
+  <span id="zumra">ZÜMRA</span>
+  <span id="heart">❤️</span>
 </div>
 
 <div id="panel">
-  <label>SES</label>
-  <input type="range" id="volume" min="0" max="1" step="0.01">
-  <label>SÜRE</label>
-  <input type="range" id="seek" min="0" max="100" step="0.1">
+  <div>
+    <div class="label">Ses</div>
+    <input type="range" min="0" max="1" step="0.01" id="volume">
+  </div>
+
+  <div>
+    <div class="label">Saniye</div>
+    <div id="time">0.0</div>
+  </div>
 </div>
 
-<div id="pickWrap">
-  <button id="pickBtn">Şarkı Seç</button>
-  <input type="file" id="file" accept="audio/*">
-</div>
-
-<audio id="audio" loop></audio>
+<audio id="audio" src="S.mp3" autoplay loop></audio>
 
 <script>
-/* === YAĞMUR === */
-const c=document.getElementById("rain");
-const ctx=c.getContext("2d");
-function resize(){c.width=innerWidth;c.height=innerHeight}
-resize();addEventListener("resize",resize);
+/* SES PANEL */
+const audio = document.getElementById("audio");
+const vol = document.getElementById("volume");
+const timeEl = document.getElementById("time");
 
-const rain=[];
-for(let i=0;i<1000;i++){
-  rain.push({
-    x:Math.random()*c.width,
-    y:Math.random()*c.height,
-    l:10+Math.random()*25,
-    s:10+Math.random()*15,
-    w:Math.random()*1.2-.6,
-    o:Math.random()*.5+.2
-  });
-}
-function draw(){
-  ctx.fillStyle="rgba(0,0,0,.25)";
-  ctx.fillRect(0,0,c.width,c.height);
-  rain.forEach(r=>{
-    ctx.beginPath();
-    ctx.strokeStyle=`rgba(255,255,255,${r.o})`;
-    ctx.moveTo(r.x,r.y);
-    ctx.lineTo(r.x-r.w*2,r.y-r.l);
-    ctx.stroke();
-    r.x+=r.w;r.y+=r.s;
-    if(r.y>c.height)r.y=-50;
-  });
-  requestAnimationFrame(draw);
-}
-draw();
+vol.value = 0.7;
+audio.volume = 0.7;
+vol.oninput = () => audio.volume = vol.value;
 
-/* === ISLAK DAMLA === */
 setInterval(()=>{
-  if(Math.random()<0.25){
-    const d=document.createElement("div");
-    d.className="drop";
-    d.style.left=Math.random()*innerWidth+"px";
-    d.style.animationDuration=8+Math.random()*6+"s";
-    wets.appendChild(d);
-    setTimeout(()=>d.remove(),15000);
+  timeEl.textContent = audio.currentTime.toFixed(1);
+},100);
+
+/* YAĞMUR */
+const c = document.getElementById("rain");
+const ctx = c.getContext("2d");
+let w,h;
+function resize(){
+  w=c.width=innerWidth;
+  h=c.height=innerHeight;
+}
+resize(); addEventListener("resize",resize);
+
+let drops = Array.from({length:700},()=>({
+  x:Math.random()*w,
+  y:Math.random()*h,
+  l:Math.random()*25+15,
+  s:Math.random()*6+6
+}));
+
+function rain(){
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle="rgba(255,255,255,.35)";
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let d of drops){
+    ctx.moveTo(d.x,d.y);
+    ctx.lineTo(d.x,d.y+d.l);
+    d.y+=d.s;
+    if(d.y>h){d.y=-20;d.x=Math.random()*w}
+  }
+  ctx.stroke();
+  requestAnimationFrame(rain);
+}
+rain();
+
+/* NADİR ISLAKLIK */
+setInterval(()=>{
+  if(Math.random()<0.15){
+    const wet=document.createElement("div");
+    wet.className="wet";
+    document.getElementById("center").appendChild(wet);
+    setTimeout(()=>wet.remove(),4000);
+  }
+  if(Math.random()<0.1){
+    const drop=document.createElement("div");
+    drop.className="drop";
+    drop.style.left=Math.random()*100+"px";
+    drop.style.top="-20px";
+    document.getElementById("center").appendChild(drop);
+    setTimeout(()=>drop.remove(),3500);
   }
 },3000);
-
-/* === MÜZİK === */
-const audio=document.getElementById("audio");
-const file=document.getElementById("file");
-const pickBtn=document.getElementById("pickBtn");
-const pickWrap=document.getElementById("pickWrap");
-const panel=document.getElementById("panel");
-const volume=document.getElementById("volume");
-const seek=document.getElementById("seek");
-
-volume.value=0.7;
-audio.volume=0.7;
-
-const req=indexedDB.open("ZUMRA_DB",1);
-let db;
-
-req.onupgradeneeded=e=>{
-  db=e.target.result;
-  db.createObjectStore("music");
-};
-req.onsuccess=e=>{
-  db=e.target.result;
-  const tx=db.transaction("music","readonly")
-    .objectStore("music").get("song");
-  tx.onsuccess=()=>{
-    if(tx.result){
-      audio.src=tx.result;
-      audio.play();
-      pickWrap.style.display="none";
-      panel.style.display="flex";
-    }
-  };
-};
-
-pickBtn.onclick=()=>file.click();
-
-file.onchange=()=>{
-  const f=file.files[0];
-  if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{
-    db.transaction("music","readwrite")
-      .objectStore("music").put(r.result,"song");
-    audio.src=r.result;
-    audio.play();
-    pickWrap.style.display="none";
-    panel.style.display="flex";
-  };
-  r.readAsDataURL(f);
-};
-
-volume.oninput=()=>audio.volume=volume.value;
-audio.ontimeupdate=()=>{
-  if(audio.duration){
-    seek.max=audio.duration;
-    seek.value=audio.currentTime;
-  }
-};
-seek.oninput=()=>audio.currentTime=seek.value;
 </script>
 
 </body>
